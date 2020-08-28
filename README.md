@@ -139,7 +139,7 @@ return {
 }
 ```
 
-### 4、创建前端__service__函数（view项目）
+### 4、创建前端` __service__` 函数（view项目）
 ```javascript
 import {IThis} from '../../../node/src/This.ts';// 引入第二步构造的服务端this对象，可以获得完整的IDE语法提示
 import {createService} from 'node-lix/src/createService';
