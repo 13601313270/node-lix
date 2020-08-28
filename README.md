@@ -139,13 +139,28 @@ return {
 }
 ```
 
-### 4、创建前端` __service__` 函数（view项目）
+### 4、创建前端 函数（view项目）
 ```javascript
 import {IThis} from '../../../node/src/This.ts';// 引入第二步构造的服务端this对象，可以获得完整的IDE语法提示
-import {createService} from 'node-lix/src/createService';
 
+export function createService<T>(self: T) {
+  return function (service: (this: T, ...params: any[]) => any, ...params: any[]): any {
+    // @ts-ignore
+    if (service instanceof Promise) {
+      // @ts-ignore
+      return service.then(res => {
+        return res;
+      });
+    } else {
+      // @ts-ignore
+      return Promise.resolve(service);
+    }
+  };
+}
 export const __service__ = createService(new IThis())
 ```
+保存在view项目里，名称需要叫` __service__.js`或者` __service__.ts`
+如果不使用ts类型，这一步可以省略
 
 
 ## 使用
