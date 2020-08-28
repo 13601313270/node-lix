@@ -1,7 +1,5 @@
-declare type ICallbackParams<T> = (this: T, ...params: any[]) => any;
-
 export function createService<T>(self: T) {
-    return function (service: ICallbackParams<T>, ...params: any[]): any {
+    return function (service: (this: T, ...params: any[]) => any, ...params: any[]): any {
         // @ts-ignore
         if (service instanceof Promise) {
             // @ts-ignore
