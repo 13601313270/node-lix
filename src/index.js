@@ -5,8 +5,8 @@ const md5 = require('md5-node')
 const running = require('./running')
 let findSlot = null
 
-class MyPlugin {
-    constructor(getHttpUrl, getSaveCodePath, getSentParams) {
+class LixPlugin {
+    constructor({getHttpUrl, getSaveCodePath, getSentParams}) {
         this.getHttpUrl = getHttpUrl;
         this.getSaveCodePath = getSaveCodePath;
         if (getSentParams) {
@@ -102,9 +102,12 @@ exports.default = ${content}`,
 
                 function handler(parser) {
                     parser.hooks.program.tap('DefinePlugin', (ast, comments) => {
-                        if (parser.state &&
+                        if (
+                            parser.state &&
                             parser.state.module &&
-                            parser.state.module.resource.indexOf('node_modules') === -1) {
+                            parser.state.module.resource.indexOf('node_modules') === -1 &&
+                            !parser.state.module.resource.match(/\.(html|htm|css|less|scss)$/)
+                        ) {
                             if (parser.state.module.resource.includes('__service__')) {
                                 ast.body = []
                                 var dep = new ConstDependency(`exports.__service__ = function(service, ...params){
@@ -234,5 +237,5 @@ exports.default = ${content}`,
     }
 }
 
-exports.lix = MyPlugin;
+exports.lix = LixPlugin;
 exports.running = running;
