@@ -23,7 +23,7 @@
 ## 准备工作
 `npm i node-lix`
 
-###1、在webpack配置文件里添加插件（view项目）
+### 1、在webpack配置文件里添加插件（view项目）
 
 ```javascript
 const {lix} = require('node-lix')
@@ -60,7 +60,7 @@ module.exports = {
 };
 ```
 
-###2、创建服务端代码里的this对象（node项目）
+### 2、创建服务端代码里的this对象（node项目）
 
 __service__包的函数的上下文都在this对象上扩展
 
@@ -82,7 +82,7 @@ export class IThis {
 
 ```
 
-###3、中间层（链接http地址和保存的code文件）（node项目）
+### 3、中间层（链接http地址和保存的code文件）（node项目）
 
 接下来你需要根据你的项目情况，写一个中间层，保证node服务，接收http地址，可以正确的去执行保存的函数。
 
@@ -139,7 +139,7 @@ return {
 }
 ```
 
-###4、创建前端__service__函数（view项目）
+### 4、创建前端__service__函数（view项目）
 ```javascript
 import {IThis} from '../../../node/src/This.ts';// 引入第二步构造的服务端this对象，可以获得完整的IDE语法提示
 import {createService} from 'node-lix/src/createService';
@@ -148,7 +148,7 @@ export const __service__ = createService(new IThis())
 ```
 
 
-##使用
+## 使用
 
 ### react的Demo
 ```
@@ -207,7 +207,7 @@ export default {
 </script>
 
 ```
-#注意事项
+# 注意事项
 1、__service__第一个参数是一个函数，必须使用function(){}函数表达式，不能使用箭头函数()=>{}，因为es标准里箭头函数使用外部的this的对象。
 
 2、在__service__内的code里执行console.log是推荐的调试方法，console.log的执行，会输出到浏览器端的控制台。但是线上环境建议关闭，否则容易输出敏感内容，关闭方法可以在准备工作第三步配置
