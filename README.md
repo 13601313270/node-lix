@@ -208,9 +208,9 @@ export default {
 
 ```
 # 注意事项
-1、__service__第一个参数是一个函数，必须使用function(){}函数表达式，不能使用箭头函数()=>{}，因为es标准里箭头函数使用外部的this的对象。
+1、`__service__`第一个参数是一个函数，必须使用function(){}函数表达式，不能使用箭头函数()=>{}，因为es标准里箭头函数使用外部的this的对象。
 
-2、在__service__内的code里执行console.log是推荐的调试方法，console.log的执行，会输出到浏览器端的控制台。但是线上环境建议关闭，否则容易输出敏感内容，关闭方法可以在准备工作第三步配置
+2、在`__service__`内的code里执行console.log是推荐的调试方法，console.log的执行，会输出到浏览器端的控制台。但是线上环境建议关闭，否则容易输出敏感内容，关闭方法可以在准备工作第三步配置，类似下面这样
 ```javascript
   const returnData = await apiFunc.default.call(this.thisService, ...params);
   return {
