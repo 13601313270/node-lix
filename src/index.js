@@ -6,9 +6,10 @@ const running = require('./running')
 let findSlot = null
 
 class LixPlugin {
-    constructor({getHttpUrl, getSaveCodePath, getSentParams}) {
+    constructor({getHttpUrl, getSaveCodePath, saveFileName, getSentParams}) {
         this.getHttpUrl = getHttpUrl;
         this.getSaveCodePath = getSaveCodePath;
+        this.saveFileName = saveFileName;
         if (getSentParams) {
             this.getSentParams = getSentParams
         } else {
@@ -18,6 +19,10 @@ class LixPlugin {
             })`
             }
         }
+        const servicePath = this.getSaveCodePath()
+        if (!fs.existsSync(servicePath)) {
+            fs.mkdirSync(servicePath)
+        }
     }
 
     apply(compiler) {
@@ -26,7 +31,7 @@ class LixPlugin {
 
         function writeFunction(hash, annotation, content) {
             return fs.writeFileSync(
-                `${self.getSaveCodePath(hash, annotation)}`,
+                `${self.getSaveCodePath().replace(/\/$/, '') + '/' + self.saveFileName(hash, annotation).replace(/^\//, '')}`,
                 `var {
         _slicedToArray,
         _typeof,
