@@ -67,28 +67,46 @@ const console = {
   log (...params) {
     consoles.push({
       type: 'log',
-      text: Array.from(params)
+      text: params.map(item=>{
+        return JSON.stringify(item)
+      })
     })
   },
   error(...params){
    consoles.push({
       type: 'error',
-      text: Array.from(params)
+      text: params.map(item=>{
+        return JSON.stringify(item)
+      })
     })
   },
   warn(...params){
     consoles.push({
       type: 'warn',
-      text: Array.from(params)
+      text: params.map(item=>{
+        return JSON.stringify(item)
+      })
     })
   }
 }
 exports.default = function (params) {
     consoles = [];
-    return {
-        data: (${content}).call(this, params),
-        console: consoles
-    }
+    var data = (${content}).call(this, params)
+    return new Promise((res)=>{
+        if(data instanceof Promise){
+            data.then(dataRes=>{
+                res({
+                    data: dataRes,
+                    console: consoles
+                })
+            })
+        } else {
+            res({
+                data: data,
+                console: consoles
+            })
+        }
+    })
 }
 exports.error = function(error){
     return {
@@ -194,13 +212,18 @@ exports.error = function(error){
                           response.json().then(json=>{
                             json.console.forEach(item=>{
                               if(item.type==='error'){
-                                console.error.apply({},item.text);
+                                console.error.apply({},item.text.map(item=>{
+                                  return JSON.parse(item)
+                                }));
                               } else if(item.type==='warn'){
-                                console.warn.apply({},item.text);
+                                console.warn.apply({},item.text.map(item=>{
+                                  return JSON.parse(item)
+                                }));
                               } else {
-                                console.log.apply({},item.text)
+                                console.log.apply({},item.text.map(item=>{
+                                  return JSON.parse(item)
+                                }))
                               }
-
                             })
                             res(json.data)
                           })
