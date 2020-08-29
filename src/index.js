@@ -29,7 +29,7 @@ class LixPlugin {
         const self = this
         const allReplace = new Map()
 
-        function writeFunction(fileName, annotation, content) {
+        function writeFunction(fileName, content) {
             console.log('写入文件：' + self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName)
             return fs.writeFileSync(
                 `${self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName}`,
