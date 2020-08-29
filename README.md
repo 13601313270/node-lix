@@ -107,23 +107,12 @@ export class RunInServiceController {
         const {params} = this.body;
         // 去生成的文件夹拉取生成的code文件
         const apiFunc = require('../../../service/' + path)
-        apiFunc.clearConsole()// 清除上一次捕获的console内容
         
-        // 绑定第二步的this对象
+        // 执行的时候，第二步构造的IThis类的实例，绑定作为this对象
         try {
-          const returnData = await apiFunc.default.call(this.thisService, ...params);
-          return {
-            data: returnData,
-            console: apiFunc.getConsole()// 添加执行函数捕获的console内容（注意线上环境要返回[]空数组）
-          };
+          ctx.body = await apiFunc.default.call(this.thisService, ...params);
         } catch (e) {
-          return {
-            data: null,
-            console: [...apiFunc.getConsole(), {
-              type: 'error',
-              text: e.message
-            }]
-          };
+          ctx.body = await apiFunc.error(e);
         }
       }
     );

@@ -82,13 +82,22 @@ const console = {
     })
   }
 }
-exports.getConsole = () => {
-  return consoles
+exports.default = function (params) {
+    consoles = [];
+    return {
+        data: (${content}).call(this, params),
+        console: consoles
+    }
 }
-exports.clearConsole = function () {
-  consoles = []
-}
-exports.default = ${content}`,
+exports.error = function(error){
+    return {
+        data: null,
+        console: [...consoles, {
+            type: 'error',
+            text: [error.message+'!']
+        }]
+    }
+}`,
                 'utf8')
         }
 
