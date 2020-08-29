@@ -29,9 +29,10 @@ class LixPlugin {
         const self = this
         const allReplace = new Map()
 
-        function writeFunction(hash, annotation, content) {
+        function writeFunction(fileName, annotation, content) {
+            console.log('写入文件：' + self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName)
             return fs.writeFileSync(
-                `${self.getSaveCodePath().replace(/\/$/, '') + '/' + self.saveFileName(hash, annotation).replace(/^\//, '')}`,
+                `${self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName}`,
                 `var {
         _slicedToArray,
         _typeof,
@@ -162,17 +163,17 @@ exports.error = function(error){
                                     serviceCodeList.forEach(findService => {
                                         const funcObj = findService.arguments[0]
                                         const functionName = md5(parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1]))
-                                        allReplace.set(findService, functionName)
                                         const code = parser.state.current.originalSource()._value.slice(findService.range[0], findService.range[1]);
                                         let annotation = code.match(/__service__\(\s*\/\*(.+?)\*\//);
                                         if (annotation !== null) {
                                             annotation = annotation[1]
                                         }
+                                        const fileName = self.saveFileName(functionName, annotation).replace(/^\//, '')
+                                        allReplace.set(findService, fileName)
                                         let result = writeFunction(
-                                            functionName, annotation,
+                                            fileName,
                                             parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1])
                                         )
-                                        console.log('写入文件：' + functionName)
                                         findService.arguments[0] = {
                                             type: 'Literal',
                                             value: null,
@@ -237,15 +238,12 @@ exports.error = function(error){
             //!!!!!!!!!!!!
             const runningFunc = Array.from(allReplace.values())
             const files = fs.readdirSync(servicePath)
-            const allExistFile = files.map(item => {
-                return item.replace(/.js$/, '')
-            })
-            allExistFile
+            files
                 .filter(item => {
                     return !runningFunc.includes(item)
                 })
                 .forEach(item => {
-                    fs.unlinkSync(`${servicePath}/${item}.js`)
+                    fs.unlinkSync(`${servicePath}/${item}`)
                 })
         })
     }
