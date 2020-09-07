@@ -19,6 +19,7 @@ class LixPlugin {
             })`
             }
         }
+        this.templateFunc = fs.readFileSync(__dirname + '/nodeRunningTemplate.js', 'utf-8')
         const servicePath = this.getSaveCodePath()
         if (!fs.existsSync(servicePath)) {
             fs.mkdirSync(servicePath)
@@ -31,92 +32,10 @@ class LixPlugin {
 
         function writeFunction(fileName, content) {
             console.log('写入文件：' + self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName)
+
             return fs.writeFileSync(
                 `${self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName}`,
-                `var {
-        _slicedToArray,
-        _typeof,
-        _asyncToGenerator,
-        __extends,
-        __assign,
-        __rest,
-        __decorate,
-        __param,
-        __metadata,
-        __awaiter,
-        __generator,
-        __exportStar,
-        __values,
-        __read,
-        __spread,
-        __spreadArrays,
-        __await,
-        __asyncGenerator,
-        __asyncDelegator,
-        __asyncValues,
-        __makeTemplateObject,
-        __importStar,
-        __importDefault,
-        __classPrivateFieldGet,
-        __classPrivateFieldSet,
-        __createBinding,
-        regeneratorRuntime
-        } = require('node-lix').running;
-let consoles = [];
-const console = {
-  log (...params) {
-    consoles.push({
-      type: 'log',
-      text: params.map(item=>{
-        return JSON.stringify(item)
-      })
-    })
-  },
-  error(...params){
-   consoles.push({
-      type: 'error',
-      text: params.map(item=>{
-        return JSON.stringify(item)
-      })
-    })
-  },
-  warn(...params){
-    consoles.push({
-      type: 'warn',
-      text: params.map(item=>{
-        return JSON.stringify(item)
-      })
-    })
-  }
-}
-exports.default = function (params) {
-    consoles = [];
-    var data = (${content}).call(this, params)
-    return new Promise((res)=>{
-        if(data instanceof Promise){
-            data.then(dataRes=>{
-                res({
-                    data: dataRes,
-                    console: consoles
-                })
-            })
-        } else {
-            res({
-                data: data,
-                console: consoles
-            })
-        }
-    })
-}
-exports.error = function(error){
-    return {
-        data: null,
-        console: [...consoles, {
-            type: 'error',
-            text: [error.message+'!']
-        }]
-    }
-}`,
+                self.templateFunc.replace('`$$content$$`', content),
                 'utf8')
         }
 
@@ -256,19 +175,19 @@ exports.error = function(error){
                     .tap('DefinePlugin', handler)
             }
         )
-        compiler.hooks.afterEmit.tap('DefinePlugin', () => {
-            const servicePath = self.getSaveCodePath()
-            //!!!!!!!!!!!!
-            const runningFunc = Array.from(allReplace.values())
-            const files = fs.readdirSync(servicePath)
-            files
-                .filter(item => {
-                    return !runningFunc.includes(item)
-                })
-                .forEach(item => {
-                    fs.unlinkSync(`${servicePath}/${item}`)
-                })
-        })
+        // compiler.hooks.afterEmit.tap('DefinePlugin', () => {
+        //     const servicePath = self.getSaveCodePath()
+        //     //!!!!!!!!!!!!
+        //     const runningFunc = Array.from(allReplace.values())
+        //     const files = fs.readdirSync(servicePath)
+        //     files
+        //         .filter(item => {
+        //             return !runningFunc.includes(item)
+        //         })
+        //         .forEach(item => {
+        //             fs.unlinkSync(`${servicePath}/${item}`)
+        //         })
+        // })
     }
 }
 

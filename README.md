@@ -110,7 +110,7 @@ export class RunInServiceController {
         
         // 执行的时候，第二步构造的IThis类的实例，绑定作为this对象
         try {
-          ctx.body = await apiFunc.default.call(this.thisService, ...params);
+          ctx.body = await apiFunc.default.call(this.thisService, params);
         } catch (e) {
           ctx.body = await apiFunc.error(e);
         }
@@ -119,13 +119,6 @@ export class RunInServiceController {
   }
 }
 
-```
-返回结构必须是
-```javascript
-return {
-    data: 'XXXX',
-    console: apiFunc.getConsole()// 添加执行函数捕获的console内容
-}
 ```
 
 ### 4、创建前端 函数（view项目）
@@ -216,11 +209,12 @@ export default {
 
 2、在`__service__`内的code里执行console.log是推荐的调试方法，console.log的执行，会输出到浏览器端的控制台。但是线上环境建议关闭，否则容易输出敏感内容，关闭方法可以在准备工作第三步配置，类似下面这样
 ```javascript
-  const returnData = await apiFunc.default.call(this.thisService, ...params);
-  return {
-    data: returnData,
-    console: env==='prod'?[]:apiFunc.getConsole()// 添加执行函数捕获的console内容（注意线上环境要返回[]空数组）
-  };
+  const returnData = await apiFunc.default.call(this.thisService, params);
+  if(env==='prod'){
+    // 添加执行函数捕获的console内容（注意线上环境要返回[]空数组）
+    returnData['console'] = [];
+  }
+  ctx.body = returnData;
 ```
 3、内外作用域是隔离的，不要使用作用域链获取外部的变量
 ```javascript
