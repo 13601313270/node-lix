@@ -64,6 +64,12 @@ exports.default = function (params) {
                     data: dataRes,
                     console: consoles
                 })
+            }).catch(e => {
+                console.error(e.toString())
+                res({
+                    data: null,
+                    console: consoles
+                })
             })
         } else {
             res({
