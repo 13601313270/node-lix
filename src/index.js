@@ -6,10 +6,17 @@ const running = require('./running')
 let findSlot = null
 
 class LixPlugin {
-    constructor({getHttpUrl, getSaveCodePath, saveFileName, getSentParams}) {
+    constructor({getHttpUrl, getSaveCodePath, saveFileName, getSentParams, functionName}) {
         this.getHttpUrl = getHttpUrl;
         this.getSaveCodePath = getSaveCodePath;
         this.saveFileName = saveFileName;
+        if (functionName) {
+            this.functionName = functionName
+        } else {
+            this.functionName = function (hash, annotation) {
+                return 'default';
+            }
+        }
         if (getSentParams) {
             this.getSentParams = getSentParams
         } else {
@@ -20,32 +27,58 @@ class LixPlugin {
             }
         }
         this.templateFunc = fs.readFileSync(__dirname + '/nodeRunningTemplate.js', 'utf-8')
-        const servicePath = this.getSaveCodePath()
-        if (!fs.existsSync(servicePath)) {
-            fs.mkdirSync(servicePath)
-        }
+        this.functionTemplate = fs.readFileSync(__dirname + '/functionTemplate.js', 'utf-8')
+        this.filefunctionMap = {};
     }
 
     apply(compiler) {
         const self = this
-        const allReplace = new Map()
+        let allFile2Function = {}
 
-        function writeFunction(fileName, content) {
-            console.log('写入文件：' + self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName)
+        function writeFunction(fileName, functionName, content) {
+            if (allFile2Function[fileName] === undefined) {
+                allFile2Function[fileName] = new Set()
+            }
+            if (allFile2Function[fileName].has(functionName)) {
+                throw new Error('lix构建过程中，文件' + fileName + '里有重复函数:' + functionName)
+            }
+            allFile2Function[fileName].add(functionName)
+            console.log('🔧lix build： ' + functionName + ' ---> ' + fileName)
+            if (!fs.existsSync(self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName)) {
+                fs.writeFileSync(
+                    `${self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName}`,
+                    self.templateFunc,
+                    'utf8')
+            }
 
-            return fs.writeFileSync(
+            return fs.appendFileSync(
                 `${self.getSaveCodePath().replace(/\/$/, '') + '/' + fileName}`,
-                self.templateFunc.replace('`$$content$$`', content),
+                self.functionTemplate
+                    .replace('`$$content$$`', content)
+                    .replace('$$functionName$$', functionName),
                 'utf8')
         }
 
-        compiler.hooks.watchRun.tap('DefinePlugin', compilation => {
-            allReplace.clear()
+        compiler.hooks.watchRun.tap('lixPlugin', compilation => {
+            console.log('lix build begin⏳...')
+            // 清理构造目录和变量
+            allFile2Function = {}
+            const servicePath = self.getSaveCodePath()
+            if (!fs.existsSync(servicePath)) {
+                fs.mkdirSync(servicePath)
+            } else {
+                const files = fs.readdirSync(servicePath)
+                files
+                    .forEach(item => {
+                        fs.unlinkSync(`${servicePath}/${item}`)
+                    })
+            }
         })
 
         compiler.hooks.compilation.tap(
-            'DefinePlugin',
+            'lixPlugin',
             (compilation, {normalModuleFactory}) => {
+                // 绑定dependencyFactories
                 compilation.dependencyFactories.set(ConstDependency, new NullFactory())
                 compilation.dependencyTemplates.set(
                     ConstDependency,
@@ -53,7 +86,7 @@ class LixPlugin {
                 )
 
                 function handler(parser) {
-                    parser.hooks.program.tap('DefinePlugin', (ast, comments) => {
+                    parser.hooks.program.tap('lixPlugin', (ast, comments) => {
                         if (
                             parser.state &&
                             parser.state.module &&
@@ -99,16 +132,18 @@ class LixPlugin {
                                     find(item)
                                     serviceCodeList.forEach(findService => {
                                         const funcObj = findService.arguments[0]
-                                        const functionName = md5(parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1]))
+                                        const codeHash = md5(parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1]))
                                         const code = parser.state.current.originalSource()._value.slice(findService.range[0], findService.range[1]);
                                         let annotation = code.match(/__service__\(\s*\/\*(.+?)\*\//);
                                         if (annotation !== null) {
                                             annotation = annotation[1]
                                         }
-                                        const fileName = self.saveFileName(functionName, annotation).replace(/^\//, '')
-                                        allReplace.set(findService, fileName)
+
+                                        const functionName = self.functionName(codeHash, annotation);
+                                        const fileName = self.saveFileName(codeHash, annotation).replace(/^\//, '')
                                         let result = writeFunction(
                                             fileName,
+                                            functionName,
                                             parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1])
                                         )
                                         findService.arguments[0] = {
@@ -119,8 +154,8 @@ class LixPlugin {
                                         const codes = findService.arguments.slice(1).map(item => {
                                             return parser.state.current.originalSource()._value.slice(item.range[0], item.range[1])
                                         })
-                                        var dep = new ConstDependency(`(new Promise(function (res, rej) {
-                      fetch('${self.getHttpUrl(functionName, annotation)}',{
+                                        var dep = new ConstDependency(`(new Promise((res, rej) => {
+                      fetch('${self.getHttpUrl(codeHash, annotation, fileName)}',{
                         method: "POST",
                         headers:{
                           'Content-Type': 'application/json'
@@ -157,7 +192,7 @@ class LixPlugin {
                     })
 
                     parser.hooks.statement
-                        .tap('DefinePlugin', expr => {
+                        .tap('lixPlugin', expr => {
                             if (expr.type !== 'FunctionDeclaration' && expr.type !== 'BlockStatement') {
                                 findSlot = expr
                             }
@@ -166,28 +201,15 @@ class LixPlugin {
 
                 normalModuleFactory.hooks.parser
                     .for('javascript/auto')
-                    .tap('DefinePlugin', handler)
+                    .tap('lixPlugin', handler)
                 normalModuleFactory.hooks.parser
                     .for('javascript/dynamic')
-                    .tap('DefinePlugin', handler)
+                    .tap('lixPlugin', handler)
                 normalModuleFactory.hooks.parser
                     .for('javascript/esm')
-                    .tap('DefinePlugin', handler)
+                    .tap('lixPlugin', handler)
             }
         )
-        // compiler.hooks.afterEmit.tap('DefinePlugin', () => {
-        //     const servicePath = self.getSaveCodePath()
-        //     //!!!!!!!!!!!!
-        //     const runningFunc = Array.from(allReplace.values())
-        //     const files = fs.readdirSync(servicePath)
-        //     files
-        //         .filter(item => {
-        //             return !runningFunc.includes(item)
-        //         })
-        //         .forEach(item => {
-        //             fs.unlinkSync(`${servicePath}/${item}`)
-        //         })
-        // })
     }
 }
 
