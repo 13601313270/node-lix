@@ -34,6 +34,10 @@ class LixPlugin {
     apply(compiler) {
         const self = this
         let allFile2Function = {}
+        const servicePath = self.getSaveCodePath()
+        if (!fs.existsSync(servicePath)) {
+            fs.mkdirSync(servicePath)
+        }
 
         function writeFunction(fileName, functionName, content) {
             if (allFile2Function[fileName] === undefined) {
