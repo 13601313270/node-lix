@@ -6,18 +6,21 @@ exports['$$functionName$$'] = function (params) {
             data.then(dataRes => {
                 res({
                     data: dataRes,
+                    finish: true,
                     console: consoles
                 })
             }).catch(e => {
                 console.error(e.toString())
                 res({
-                    data: null,
+                    data: e.toString(),
+                    finish: false,
                     console: consoles
                 })
             })
         } else {
             res({
                 data: data,
+                finish: true,
                 console: consoles
             })
         }

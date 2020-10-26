@@ -28,6 +28,7 @@ class LixPlugin {
         }
         this.templateFunc = fs.readFileSync(__dirname + '/nodeRunningTemplate.js', 'utf-8')
         this.functionTemplate = fs.readFileSync(__dirname + '/functionTemplate.js', 'utf-8')
+        this.ajaxTemplate = fs.readFileSync(__dirname + '/ajax.js', 'utf-8')
         this.filefunctionMap = {};
     }
 
@@ -158,35 +159,12 @@ class LixPlugin {
                                         const codes = findService.arguments.slice(1).map(item => {
                                             return parser.state.current.originalSource()._value.slice(item.range[0], item.range[1])
                                         })
-                                        var dep = new ConstDependency(`(new Promise((res, rej) => {
-                      fetch('${self.getHttpUrl(codeHash, annotation, fileName)}',{
-                        method: "POST",
-                        headers:{
-                          'Content-Type': 'application/json'
-                        },
-                        body:${self.getSentParams(codes)}
-                      })
-                        .then(function(response) {
-                          response.json().then(json=>{
-                            json.console.forEach(item=>{
-                              if(item.type==='error'){
-                                console.error.apply({},item.text.map(item=>{
-                                  return JSON.parse(item)
-                                }));
-                              } else if(item.type==='warn'){
-                                console.warn.apply({},item.text.map(item=>{
-                                  return JSON.parse(item)
-                                }));
-                              } else {
-                                console.log.apply({},item.text.map(item=>{
-                                  return JSON.parse(item)
-                                }))
-                              }
-                            })
-                            res(json.data)
-                          })
-                        });
-                    }))`, findService.range, false)
+
+                                        var dep = new ConstDependency(
+                                            self.ajaxTemplate
+                                                .replace('$$url$$',self.getHttpUrl(codeHash, annotation, fileName))
+                                                .replace('`$$content$$`',self.getSentParams(codes))
+                                            , findService.range, false)
                                         dep.loc = findService.loc
                                         parser.state.current.addDependency(dep)
                                     })
