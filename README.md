@@ -235,3 +235,16 @@ async () => {
   setData(data)
 }
 ```
+# 其他
+
+## 自定义header
+```javascript
+// 在项目入口文件，通过初始化方法，可以指定header
+import {lix} from 'node-lix';
+
+lix.header(()=>{
+    return {
+        token:getCookie('token')
+    }
+});
+```
