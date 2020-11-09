@@ -31,7 +31,7 @@
                             return JSON.parse(item)
                         }))
                     }
-                })
+                });
                 if(json.finish){
                     res(json.data)
                 } else {
@@ -39,4 +39,4 @@
                 }
             })
         });
-}))
+}));
