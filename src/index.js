@@ -48,7 +48,7 @@ class LixPlugin {
             if (allFile2Function[fileName] === undefined) {
                 allFile2Function[fileName] = new Set()
             }
-            if (allFile2Function[fileName].has(functionName)) {
+            if (allFile2Function[fileName].has(functionName) && functionName !== 'default') {
                 throw new Error('lix构建过程中，文件' + fileName + '里有重复函数:' + functionName)
             }
             allFile2Function[fileName].add(functionName)
