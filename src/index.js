@@ -6,7 +6,7 @@ const running = require('./running')
 let findSlot = null
 
 class LixPlugin {
-    constructor({getHttpUrl, getSaveCodePath, saveFileName, getSentParams, functionName}) {
+    constructor({getHttpUrl, getSaveCodePath, saveFileName, getSentParams, functionName, afterCreateCode}) {
         this.getHttpUrl = getHttpUrl;
         this.getSaveCodePath = getSaveCodePath;
         this.saveFileName = saveFileName;
@@ -25,6 +25,13 @@ class LixPlugin {
               params: [${params.join(',')}]
             })`
             }
+        }
+        // 钩子，构建完成函数代码
+        if (afterCreateCode) {
+            this.afterCreateCode = afterCreateCode;
+        } else {
+            this.afterCreateCode = function (fileName, functionName, code) {
+            };
         }
         this.templateFunc = fs.readFileSync(__dirname + '/nodeRunningTemplate.js', 'utf-8')
         this.functionTemplate = fs.readFileSync(__dirname + '/functionTemplate.js', 'utf-8')
@@ -138,7 +145,7 @@ class LixPlugin {
                                         }
                                     }
 
-                                    find(item)
+                                    find(item);
                                     serviceCodeList.forEach(findService => {
                                         const funcObj = findService.arguments[0]
                                         const codeHash = md5(parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1]))
@@ -150,11 +157,18 @@ class LixPlugin {
 
                                         const functionName = self.functionName(codeHash, annotation);
                                         const fileName = self.saveFileName(codeHash, annotation).replace(/^\//, '')
+                                        // 钩子，函数代码创建完成后
+                                        self.afterCreateCode(
+                                            fileName,
+                                            functionName,
+                                            parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1])
+                                        );
+                                        // 写入文件
                                         let result = writeFunction(
                                             fileName,
                                             functionName,
                                             parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1])
-                                        )
+                                        );
                                         findService.arguments[0] = {
                                             type: 'Literal',
                                             value: null,
@@ -166,8 +180,8 @@ class LixPlugin {
 
                                         var dep = new ConstDependency(
                                             self.ajaxTemplate
-                                                .replace('$$url$$',self.getHttpUrl(codeHash, annotation, fileName))
-                                                .replace('`$$content$$`',self.getSentParams(codes))
+                                                .replace('$$url$$', self.getHttpUrl(codeHash, annotation, fileName))
+                                                .replace('`$$content$$`', self.getSentParams(codes))
                                             , findService.range, false)
                                         dep.loc = findService.loc
                                         parser.state.current.addDependency(dep)

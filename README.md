@@ -248,3 +248,46 @@ lix.header(()=>{
     }
 });
 ```
+## 钩子
+
+### afterCreateCode
+
+每一个函数生成代码写入文件之前触发
+
+```javascript
+const {lix} = require('node-lix')
+module.exports = {
+  entry: {
+    index: 'XXXX',
+  },
+  output: {
+    publicPath: '/'
+  },
+  module: {
+    rules: []
+  },
+  plugins: [
+    new lix({
+      // 提取的服务端code文件保存到的位置
+      getSaveCodePath(hash) {
+        return `${__dirname}/../service`
+      },
+      // 浏览器请求这个函数对应的http的地址
+      getHttpUrl(hash, annotation) {
+        if (annotation) {
+          return `/api_service/${hash}/${annotation}`
+        } else {
+          return `/api_service/${hash}`
+        }
+      },
+      // 提取的服务端code保存的文件名
+      saveFileName(hash, annotation) {
+        return hash + '.js'
+      },
+      afterCreateCode(fileName, functionName, code){
+        // fileName文件，functionName函数名称，code生成的最终code
+      }
+    })
+  ]
+};
+```
