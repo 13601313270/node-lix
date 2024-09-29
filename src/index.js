@@ -39,10 +39,6 @@ class LixPlugin {
         this.filefunctionMap = {};
     }
 
-    static header(callback) {
-        LixPlugin.prototype.getHeaderObj = callback;
-    }
-
     apply(compiler) {
         const self = this
         let allFile2Function = {}

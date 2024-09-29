@@ -1,6 +1,6 @@
 {
   "name": "node-lix",
-  "version": "0.5.11",
+  "version": "1.0.0",
   "description": "run in service",
   "main": "src/index.js",
   "scripts": {

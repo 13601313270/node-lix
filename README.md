@@ -1,18 +1,16 @@
 # 前后端一体化应用
 
-
-这个项目介绍了一种代码开发方面的探索的演示
-
 中后台项目中，带有Node的项目，我们总是维护两个js项目：Node项目+View项目
 
 两者之间通过Api地址链接，新的一体化应用，通过特殊的__service__作用域，可以将两者代码写在一起。所有在`__service__`内部的代码都会在服务器执行
 
-## 更多
 使用lix一体化开发，过去我们需要在两个项目里维护代码，现在可以前后端js代码写在一起。
+
+**你可以用下面右侧的写法，来进行你的项目开发。**
 
 ![avatar](https://img.alicdn.com/tfs/TB1TUA3fkcx_u4jSZFlXXXnUFXa-1920-1080.jpg)
 
-##所有在`__service__`内部的代码都会在服务器端执行
+**所有在`__service__`内部的代码都会在服务器端执行**
 
 
 ## 实现方式
@@ -28,15 +26,6 @@
 ```javascript
 const {lix} = require('node-lix')
 module.exports = {
-  entry: {
-    index: 'XXXX',
-  },
-  output: {
-    publicPath: '/'
-  },
-  module: {
-    rules: []
-  },
   plugins: [
     new lix({
       // 提取的服务端code文件保存到的位置
@@ -121,36 +110,11 @@ export class RunInServiceController {
 
 ```
 
-### 4、创建前端 函数（view项目）
-```javascript
-import {IThis} from '../../../node/src/This.ts';// 引入第二步构造的服务端this对象，可以获得完整的IDE语法提示
-
-export function createService<T>(self: T) {
-  return function (service: (this: T, ...params: any[]) => any, ...params: any[]): any {
-    // @ts-ignore
-    if (service instanceof Promise) {
-      // @ts-ignore
-      return service.then(res => {
-        return res;
-      });
-    } else {
-      // @ts-ignore
-      return Promise.resolve(service);
-    }
-  };
-}
-export const __service__ = createService(new IThis())
-```
-保存在view项目里，名称需要叫` __service__.js`或者` __service__.ts`
-如果不使用ts类型，这一步可以省略
-
-
 ## 使用
 
 ### react的Demo
 ```
 import React, {useState, useEffect} from 'react';
-import {__service__} from "@/__service__";
 
 export default function () {
   const [data, setData] = useState([]);
@@ -181,8 +145,6 @@ export default function () {
   </div>
 </template>
 <script>
-import { __service__ } from '@/__service__'
-
 export default {
   name: 'Home',
   date () {
@@ -240,32 +202,23 @@ async () => {
 ## 自定义header
 ```javascript
 // 在项目入口文件，通过初始化方法，可以指定header
-import {lix} from 'node-lix';
+import LixClient from 'node-lix/client';
 
-lix.header(()=>{
-    return {
-        token:getCookie('token')
-    }
+LixClient.header(() => {
+  return {
+    token: getCookie('token')
+  }
 });
 ```
 ## 钩子
 
 ### afterCreateCode
 
-每一个函数生成代码写入文件之前触发
+每一个函数生成代码写入文件之前触发，提取的服务端代码，你拥有最后加工代码时机。
 
 ```javascript
 const {lix} = require('node-lix')
 module.exports = {
-  entry: {
-    index: 'XXXX',
-  },
-  output: {
-    publicPath: '/'
-  },
-  module: {
-    rules: []
-  },
   plugins: [
     new lix({
       // 提取的服务端code文件保存到的位置
