@@ -148,8 +148,10 @@ class LixPlugin {
                                     find(item);
                                     serviceCodeList.forEach(findService => {
                                         const funcObj = findService.arguments[0]
-                                        const codeHash = md5(parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1]))
-                                        const code = parser.state.current.originalSource()._value.slice(findService.range[0], findService.range[1]);
+                                        const originalSourceObj = parser.state.current.originalSource();
+                                        const originalSource = originalSourceObj._valueAsString || originalSourceObj._value;
+                                        const codeHash = md5(originalSource.slice(funcObj.range[0], funcObj.range[1]))
+                                        const code = originalSource.slice(findService.range[0], findService.range[1]);
                                         let annotation = code.match(/__service__\(\s*\/\*(.+?)\*\//);
                                         if (annotation !== null) {
                                             annotation = annotation[1]
@@ -161,13 +163,13 @@ class LixPlugin {
                                         self.afterCreateCode(
                                             fileName,
                                             functionName,
-                                            parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1])
+                                            originalSource.slice(funcObj.range[0], funcObj.range[1])
                                         );
                                         // 写入文件
                                         let result = writeFunction(
                                             fileName,
                                             functionName,
-                                            parser.state.current.originalSource()._value.slice(funcObj.range[0], funcObj.range[1])
+                                            originalSource.slice(funcObj.range[0], funcObj.range[1])
                                         );
                                         findService.arguments[0] = {
                                             type: 'Literal',
@@ -175,7 +177,7 @@ class LixPlugin {
                                             raw: 'null'
                                         }
                                         const codes = findService.arguments.slice(1).map(item => {
-                                            return parser.state.current.originalSource()._value.slice(item.range[0], item.range[1])
+                                            return originalSource.slice(item.range[0], item.range[1])
                                         })
 
                                         var dep = new ConstDependency(
