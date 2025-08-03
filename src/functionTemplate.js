@@ -1,6 +1,10 @@
 exports['$$functionName$$'] = function (params) {
     consoles = [];
-    var data = (`$$content$$`).apply(this, params)
+    var template = (`$$content$$`);
+    if (!("prototype" in template)) {
+        console.warn('__service__只能嵌套function(){}，不能嵌套()=>{}')
+    }
+    var data = template.apply(this, params)
     return new Promise((res) => {
         if (data instanceof Promise) {
             data.then(dataRes => {
